@@ -1,0 +1,54 @@
+#include <SoftwareSerial.h>
+SoftwareSerial bt(0, 1); // RX, TX
+
+#include <dht11.h>
+#define dataPin 8
+dht11 DHT;
+#define soil A2
+int temp;
+int hum;
+const int RELAY_PIN = 11;
+const int LED_PIN = 5;
+
+void setup() {
+  Serial.begin(9600); 
+  bt.begin(9600); 
+  pinMode(dataPin, INPUT); // Set the data pin of DHT11 as input
+  pinMode(RELAY_PIN, OUTPUT); 
+  digitalWrite(RELAY_PIN, LOW);
+  digitalWrite(LED_PIN, LOW);
+  Serial.println("Ready");
+}
+
+void loop() {
+  int readData = DHT.read(dataPin); // Reading DHT11 sensor values
+  int soilMoisture = analogRead(soil);
+  hum = DHT.humidity;
+  temp = DHT.temperature;
+  int moisturePercentage = map(soilMoisture, 0, 1023, 0, 100);
+  
+  Serial.print("Moisture (%): ");
+  Serial.println(moisturePercentage);
+  Serial.print("Temperature: ");
+  Serial.println(temp);
+  Serial.print("Humidity: ");
+  Serial.println(hum);
+  
+  if (moisturePercentage < 110) {
+    digitalWrite(RELAY_PIN, LOW);
+    digitalWrite(LED_PIN, HIGH);
+  } else {
+    digitalWrite(RELAY_PIN, LOW);
+    digitalWrite(LED_PIN, LOW);
+  }
+
+  // Sending sensor data over Bluetooth
+  bt.print(temp); 
+  bt.print(";");
+  bt.print(hum);
+  bt.print(";");
+  bt.print(moisturePercentage);
+  bt.println(";");
+
+  delay(4000);
+}
